@@ -1,0 +1,10 @@
+{
+  "name": "دفتر مالی من",
+  "short_name": "دفتر مالی",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#16302A",
+  "theme_color": "#16302A",
+  "orientation": "portrait",
+  "icons": []
+}

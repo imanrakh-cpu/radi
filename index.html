@@ -1,1 +1,1097 @@
-# radi
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>دفتر مالی من</title>
+
+<!-- iOS: نصب روی صفحه اصلی به‌صورت اپلیکیشن مستقل -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دفتر مالی من">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#16302A">
+<link rel="manifest" href="manifest.json">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E3;
+    --paper-deep:#EFE7D2;
+    --line:#DCD0AC;
+    --cover:#24463A;
+    --cover-dark:#16302A;
+    --cover-light:#325E4E;
+    --ink:#2A2420;
+    --ink-soft:#79705F;
+    --brass:#A67C3D;
+    --brass-soft:#D9C293;
+    --red:#9C3B2C;
+    --red-soft:#E9C9C2;
+    --green-soft:#CFE0D2;
+    --shadow: 0 10px 30px rgba(22,48,42,0.18);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Vazirmatn', Tahoma, sans-serif;
+    background: var(--cover-dark);
+    color:var(--ink);
+    min-height:100vh;
+    padding:18px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:1040px;
+    margin:0 auto;
+    display:flex;
+    background:var(--paper);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    min-height: 680px;
+    border: 1px solid var(--cover-dark);
+  }
+  /* ---- Tabs (ledger dividers) ---- */
+  .tabs{
+    display:flex;
+    flex-direction:column;
+    background: var(--cover);
+    padding: 22px 0;
+    width: 78px;
+    flex-shrink:0;
+    gap: 6px;
+    position:relative;
+  }
+  .tab-btn{
+    all:unset;
+    cursor:pointer;
+    color: var(--brass-soft);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    padding: 16px 10px;
+    font-size: 14px;
+    font-weight:600;
+    letter-spacing: 0.5px;
+    border-radius: 0 8px 8px 0;
+    transition: all .18s ease;
+    text-align:center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height: 96px;
+  }
+  .tab-btn:hover{ background: rgba(255,255,255,0.06); color:#fff; }
+  .tab-btn.active{
+    background: var(--paper);
+    color: var(--cover-dark);
+    margin-right: -1px;
+    box-shadow: -3px 0 8px rgba(0,0,0,0.15) inset;
+  }
+  .tab-icon{ writing-mode: horizontal-tb; font-size:16px; margin-bottom:6px; display:block;}
+
+  /* ---- Page ---- */
+  .page{
+    flex:1;
+    padding: 28px 34px 40px;
+    background-image: repeating-linear-gradient(var(--paper) 0px, var(--paper) 30px, var(--line) 31px);
+    background-attachment: local;
+    position:relative;
+    min-width:0;
+  }
+  .page::before{
+    content:"";
+    position:absolute; inset:0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.03), transparent 12px);
+    pointer-events:none;
+  }
+  header.top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom: 22px; flex-wrap:wrap; gap:8px;
+    border-bottom: 2px solid var(--cover);
+    padding-bottom: 12px;
+  }
+  header.top h1{
+    font-size: 24px; font-weight:800; margin:0; color:var(--cover-dark);
+  }
+  header.top .sub{ font-size:12.5px; color:var(--ink-soft); }
+  .save-badge{
+    font-size:11.5px; color:var(--cover); background:var(--green-soft);
+    padding:4px 10px; border-radius:20px; display:flex; align-items:center; gap:6px;
+    border:1px solid var(--cover-light);
+  }
+  .save-dot{ width:6px;height:6px;border-radius:50%; background:var(--cover); }
+
+  .panel{ display:none; animation: fade .25s ease; }
+  .panel.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  h2.section-title{
+    font-size:16px; font-weight:700; color:var(--cover-dark);
+    margin: 26px 0 12px; display:flex; align-items:center; gap:8px;
+  }
+  h2.section-title:first-child{ margin-top:0; }
+  h2.section-title .rule{ flex:1; height:1px; background:var(--line); }
+
+  .card-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+  }
+  .stat-card{
+    background: var(--paper-deep);
+    border:1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .stat-card .label{ font-size:11.5px; color:var(--ink-soft); margin-bottom:6px; }
+  .stat-card .value{
+    font-size:19px; font-weight:800; color:var(--cover-dark);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .value.pos{ color:var(--cover); }
+  .stat-card .value.neg{ color:var(--red); }
+  .stat-card .unit{ font-size:11px; font-weight:500; color:var(--ink-soft); }
+
+  .two-col{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  @media (max-width:720px){ .two-col{ grid-template-columns:1fr; } }
+
+  form.entry-form{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+    gap:10px; align-items:end;
+    background: var(--paper-deep); border:1px solid var(--line);
+    border-radius:8px; padding:14px; margin-bottom:16px;
+  }
+  form.entry-form .field{ display:flex; flex-direction:column; gap:4px; }
+  form.entry-form label{ font-size:11.5px; color:var(--ink-soft); font-weight:600; }
+  form.entry-form input[type=text], form.entry-form input[type=number], form.entry-form input[type=date]{
+    font-family:inherit; font-size:13.5px; padding:8px 9px;
+    border:1px solid var(--line); border-radius:6px; background:#fff;
+    color:var(--ink); outline:none;
+  }
+  form.entry-form input:focus{ border-color:var(--cover); box-shadow: 0 0 0 2px rgba(36,70,58,0.12); }
+  .checkbox-field{ flex-direction:row !important; align-items:center; gap:6px !important; }
+  .jalali-date-field{ display:flex; gap:6px; }
+  .jalali-date-field select{
+    font-family:inherit; font-size:13px; padding:8px 4px;
+    border:1px solid var(--line); border-radius:6px; background:#fff;
+    color:var(--ink); outline:none; flex:1; min-width:0;
+  }
+  .jalali-date-field select:focus{ border-color:var(--cover); box-shadow: 0 0 0 2px rgba(36,70,58,0.12); }
+  .checkbox-field input{ width:16px; height:16px; }
+  .checkbox-field label{ font-weight:500; color:var(--ink); }
+
+  button.btn{
+    all:unset; cursor:pointer; font-family:inherit;
+    background: var(--cover); color:#fff; font-weight:700; font-size:13px;
+    padding: 9px 18px; border-radius:6px; text-align:center;
+    transition: background .15s ease;
+  }
+  button.btn:hover{ background: var(--cover-light); }
+  button.btn.ghost{
+    background:transparent; color:var(--red); border:1px solid var(--red-soft);
+    font-weight:600; padding:7px 14px; font-size:12.5px;
+  }
+  button.btn.ghost:hover{ background: var(--red-soft); }
+  button.btn.small{ padding:6px 12px; font-size:12px; }
+  .btn-row{ display:flex; justify-content:flex-end; gap:8px; }
+
+  table.ledger-table{
+    width:100%; border-collapse:collapse; font-size:13px; margin-bottom:8px;
+  }
+  table.ledger-table th{
+    text-align:right; font-size:11.5px; color:var(--ink-soft);
+    border-bottom:2px solid var(--cover); padding:7px 8px; font-weight:700;
+  }
+  table.ledger-table td{
+    padding:8px; border-bottom:1px dashed var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+  table.ledger-table tr:hover td{ background: rgba(36,70,58,0.04); }
+  table.ledger-table .amt{ font-weight:700; }
+  table.ledger-table .amt.debt{ color:var(--red); }
+  table.ledger-table .amt.credit{ color:var(--cover); }
+  .row-del{ all:unset; cursor:pointer; color:var(--red); font-size:15px; padding:2px 6px; }
+  .row-del:hover{ opacity:.6; }
+  .tag{
+    font-size:11px; padding:2px 8px; border-radius:10px; background:var(--brass-soft);
+    color:#5a4420; font-weight:600;
+  }
+  .tag.due-soon{ background:#FCE3B8; color:#7a4d06; }
+  .tag.due-over{ background:#F1C4BC; color:#7a2411; }
+  .tag.due-ok{ background:var(--green-soft); color:#1f4a37; }
+  .trend-row{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 12px; border-bottom:1px dashed var(--line); font-size:13px; }
+  .trend-row:last-child{ border-bottom:none; }
+  .trend-row .trend-month{ font-weight:600; color:var(--ink); }
+  .trend-row .trend-amt{ color:var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .trend-badge{ font-size:12px; font-weight:700; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px; }
+  .trend-badge.up{ background:var(--red-soft); color:var(--red); }
+  .trend-badge.down{ background:var(--green-soft); color:var(--cover); }
+  .trend-badge.flat{ background:var(--paper-deep); color:var(--ink-soft); border:1px solid var(--line); }
+  .trend-wrap{ background:var(--paper-deep); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:16px; }
+  .alert-banner{
+    background:#FCE3B8; border:1px solid #E9C27A; border-radius:8px;
+    padding:12px 14px; margin-bottom:16px; font-size:13px;
+  }
+  .alert-banner.danger{ background:#F1C4BC; border-color:#DE9A8B; }
+  .alert-banner .alert-title{ font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .alert-banner ul{ margin:0; padding-right:18px; }
+  .alert-banner li{ margin-bottom:4px; }
+  .empty-note{
+    color:var(--ink-soft); font-size:13px; padding: 18px; text-align:center;
+    border:1px dashed var(--line); border-radius:8px; background:var(--paper-deep);
+  }
+
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12.5px; }
+  .bar-row .bar-label{ width:88px; flex-shrink:0; color:var(--ink); font-weight:600; }
+  .bar-track{ flex:1; height:14px; background:var(--paper-deep); border-radius:7px; overflow:hidden; border:1px solid var(--line);}
+  .bar-fill{ height:100%; background: linear-gradient(90deg, var(--cover), var(--cover-light)); border-radius:7px 0 0 7px; }
+  .bar-pct{ width:66px; text-align:left; flex-shrink:0; color:var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  .tips-list{ padding-right:20px; margin:0; }
+  .tips-list li{ margin-bottom:8px; font-size:13.5px; line-height:1.7; }
+
+  .chart-wrap{ background:var(--paper-deep); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px; }
+
+  ::placeholder{ color: #b3a98e; }
+
+  @media (max-width:640px){
+    .app{ flex-direction:column; }
+    .tabs{ flex-direction:row; width:100%; padding:8px; overflow-x:auto; }
+    .tab-btn{ writing-mode:horizontal-tb; min-height:auto; padding:10px 14px; border-radius:8px; white-space:nowrap;}
+    .tab-icon{ display:inline; margin:0 0 0 6px; }
+    .page{ padding:20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="summary"><span class="tab-icon">📖</span>خلاصه</button>
+    <button class="tab-btn" data-tab="accounts"><span class="tab-icon">🏛️</span>حساب‌ها</button>
+    <button class="tab-btn" data-tab="expenses"><span class="tab-icon">💸</span>هزینه‌ها</button>
+    <button class="tab-btn" data-tab="checks"><span class="tab-icon">📄</span>چک‌ها</button>
+    <button class="tab-btn" data-tab="counterparty"><span class="tab-icon">🤝</span>طرف حساب</button>
+    <button class="tab-btn" data-tab="loans"><span class="tab-icon">🏦</span>وام</button>
+  </nav>
+
+  <main class="page">
+    <header class="top">
+      <div>
+        <h1>💼 دفتر مالی من</h1>
+        <div class="sub">هزینه روزانه، چک‌ها، طرف حساب و وام‌ها — کاملاً آفلاین</div>
+      </div>
+      <div class="save-badge" id="saveBadge"><span class="save-dot"></span><span id="saveText">ذخیره‌شده</span></div>
+    </header>
+
+    <!-- ===== SUMMARY ===== -->
+    <section class="panel active" id="tab-summary">
+      <div id="summaryAlerts"></div>
+
+      <h2 class="section-title">حساب‌های بانکی<span class="rule"></span></h2>
+      <div class="card-grid">
+        <div class="stat-card"><div class="label">جمع موجودی اولیه</div><div class="value" id="s_accInitial">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">جمع موجودی فعلی</div><div class="value pos" id="s_accCurrent">۰</div><div class="unit">تومان</div></div>
+      </div>
+
+      <h2 class="section-title">هزینه‌های اخیر<span class="rule"></span></h2>
+      <div class="card-grid">
+        <div class="stat-card"><div class="label">جمع کل هزینه‌ها</div><div class="value" id="s_expTotal">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">میانگین روزانه</div><div class="value" id="s_expAvg">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">برآورد ماهانه</div><div class="value" id="s_expMonthly">۰</div><div class="unit">تومان</div></div>
+      </div>
+
+      <h2 class="section-title">وضعیت چک‌ها<span class="rule"></span></h2>
+      <div class="card-grid">
+        <div class="stat-card"><div class="label">جمع چک‌های دریافتی</div><div class="value pos" id="s_chkRecv">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">جمع چک‌های پرداختی</div><div class="value neg" id="s_chkPaid">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">خالص چک‌ها</div><div class="value" id="s_chkNet">۰</div><div class="unit">تومان</div></div>
+      </div>
+
+      <h2 class="section-title">طرف حساب‌ها<span class="rule"></span></h2>
+      <div class="card-grid">
+        <div class="stat-card"><div class="label">طلب من از دیگران</div><div class="value pos" id="s_cpClaim">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">بدهی من به دیگران</div><div class="value neg" id="s_cpDebt">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">خالص طرف حساب</div><div class="value" id="s_cpNet">۰</div><div class="unit">تومان</div></div>
+      </div>
+
+      <h2 class="section-title">وام‌ها<span class="rule"></span></h2>
+      <div class="card-grid">
+        <div class="stat-card"><div class="label">مانده کل اقساط</div><div class="value neg" id="s_loanRemain">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">جمع اصل وام‌ها</div><div class="value" id="s_loanPrincipal">۰</div><div class="unit">تومان</div></div>
+      </div>
+    </section>
+
+    <!-- ===== BANK ACCOUNTS ===== -->
+    <section class="panel" id="tab-accounts">
+      <h2 class="section-title">حساب‌های بانکی<span class="rule"></span></h2>
+      <form class="entry-form" id="accountForm">
+        <div class="field"><label>نام حساب / کارت</label><input type="text" id="acc_name" placeholder="مثلاً کارت ملت" required></div>
+        <div class="field"><label>موجودی اولیه (تومان)</label><input type="text" inputmode="numeric" id="acc_balance" placeholder="۰" required></div>
+        <div class="field"><button type="submit" class="btn">افزودن حساب</button></div>
+      </form>
+      <div id="accountTableWrap"></div>
+      <h2 class="section-title">جمع موجودی فعلی حساب‌ها<span class="rule"></span></h2>
+      <div class="stat-card" style="max-width:260px;"><div class="value" id="acc_totalBalance">۰</div><div class="unit">تومان</div></div>
+    </section>
+
+    <!-- ===== EXPENSES ===== -->
+    <section class="panel" id="tab-expenses">
+      <h2 class="section-title">ثبت هزینه جدید<span class="rule"></span>
+        <button class="btn ghost small" id="clearExpenses">پاک‌سازی همه</button>
+      </h2>
+      <form class="entry-form" id="expenseForm">
+        <div class="field">
+          <label>تاریخ (شمسی)</label>
+          <div class="jalali-date-field">
+            <select id="exp_jd" aria-label="روز"></select>
+            <select id="exp_jm" aria-label="ماه"></select>
+            <select id="exp_jy" aria-label="سال"></select>
+          </div>
+        </div>
+        <div class="field"><label>دسته</label><input type="text" id="exp_cat" list="catList" placeholder="خوراک، حمل‌ونقل..." required></div>
+        <div class="field"><label>کارت / حساب بانکی</label><input type="text" id="exp_card" list="cardList" placeholder="نقد، کارت ملت..." required></div>
+        <div class="field"><label>مبلغ (تومان)</label><input type="text" inputmode="numeric" id="exp_amount" placeholder="۱۵۰,۰۰۰" required></div>
+        <div class="field"><button type="submit" class="btn">افزودن به دفتر</button></div>
+      </form>
+      <datalist id="catList"></datalist>
+      <datalist id="cardList"></datalist>
+
+      <div class="card-grid">
+        <div class="stat-card"><div class="label">جمع کل هزینه‌ها</div><div class="value" id="e_total">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">میانگین روزانه</div><div class="value" id="e_avg">۰</div><div class="unit">تومان</div></div>
+        <div class="stat-card"><div class="label">تعداد ردیف‌ها</div><div class="value" id="e_count">۰</div></div>
+      </div>
+
+      <div class="two-col" style="margin-top:16px;">
+        <div class="stat-card">
+          <div class="label">پرهزینه‌ترین روز</div>
+          <div class="value" id="e_maxDay">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">کم‌هزینه‌ترین روز</div>
+          <div class="value" id="e_minDay">—</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">هزینه ۱۴ روز اخیر<span class="rule"></span></h2>
+      <div class="chart-wrap"><svg id="dayChart" viewBox="0 0 700 200" width="100%" height="200"></svg></div>
+
+      <h2 class="section-title">نمودار ماهانه<span class="rule"></span></h2>
+      <div class="chart-wrap"><svg id="monthChart" viewBox="0 0 700 200" width="100%" height="200"></svg></div>
+      <div id="monthTrend"></div>
+
+      <h2 class="section-title">ردیف‌های ثبت‌شده<span class="rule"></span></h2>
+      <div id="expenseTableWrap"></div>
+    </section>
+
+    <!-- ===== CHECKS ===== -->
+    <section class="panel" id="tab-checks">
+      <div id="checksAlerts"></div>
+      <div class="two-col">
+        <div>
+          <h2 class="section-title">چک‌های دریافتی<span class="rule"></span></h2>
+          <form class="entry-form" id="checkRecvForm">
+            <div class="field"><label>طرف چک</label><input type="text" id="crecv_name" placeholder="نام" required></div>
+            <div class="field"><label>مبلغ (تومان)</label><input type="text" inputmode="numeric" id="crecv_amount" required></div>
+            <div class="field"><label>تاریخ سررسید</label><input type="date" id="crecv_date"></div>
+            <div class="field"><button type="submit" class="btn small">افزودن چک دریافتی</button></div>
+          </form>
+          <div id="checkRecvTableWrap"></div>
+        </div>
+        <div>
+          <h2 class="section-title">چک‌های پرداختی<span class="rule"></span></h2>
+          <form class="entry-form" id="checkPaidForm">
+            <div class="field"><label>طرف چک</label><input type="text" id="cpaid_name" placeholder="نام" required></div>
+            <div class="field"><label>مبلغ (تومان)</label><input type="text" inputmode="numeric" id="cpaid_amount" required></div>
+            <div class="field"><label>تاریخ سررسید</label><input type="date" id="cpaid_date"></div>
+            <div class="field"><button type="submit" class="btn small">افزودن چک پرداختی</button></div>
+          </form>
+          <div id="checkPaidTableWrap"></div>
+        </div>
+      </div>
+      <h2 class="section-title">خالص چک‌ها (دریافتی − پرداختی)<span class="rule"></span></h2>
+      <div class="stat-card" style="max-width:260px;"><div class="value" id="chk_net">۰</div><div class="unit">تومان</div></div>
+    </section>
+
+    <!-- ===== COUNTERPARTY ===== -->
+    <section class="panel" id="tab-counterparty">
+      <h2 class="section-title">طرف حساب‌ها<span class="rule"></span></h2>
+      <form class="entry-form" id="cpForm">
+        <div class="field"><label>نام طرف حساب</label><input type="text" id="cp_name" placeholder="نام" required></div>
+        <div class="field"><label>طلب من از او (تومان)</label><input type="text" inputmode="numeric" id="cp_claim" placeholder="۰"></div>
+        <div class="field"><label>بدهی من به او (تومان)</label><input type="text" inputmode="numeric" id="cp_debt" placeholder="۰"></div>
+        <div class="field"><button type="submit" class="btn">افزودن طرف حساب</button></div>
+      </form>
+      <div id="cpTableWrap"></div>
+      <h2 class="section-title">خالص طرف حساب (طلب − بدهی)<span class="rule"></span></h2>
+      <div class="stat-card" style="max-width:260px;"><div class="value" id="cp_net">۰</div><div class="unit">تومان</div></div>
+    </section>
+
+    <!-- ===== LOANS ===== -->
+    <section class="panel" id="tab-loans">
+      <h2 class="section-title">وام‌ها<span class="rule"></span></h2>
+      <form class="entry-form" id="loanForm">
+        <div class="field"><label>نام وام</label><input type="text" id="loan_name" placeholder="مثلاً وام ازدواج" required></div>
+        <div class="field"><label>اصل وام (تومان)</label><input type="text" inputmode="numeric" id="loan_principal" required></div>
+        <div class="field"><label>مانده باقی‌مانده (تومان)</label><input type="text" inputmode="numeric" id="loan_remaining" required></div>
+        <div class="field"><button type="submit" class="btn">افزودن وام</button></div>
+      </form>
+      <div id="loanTableWrap"></div>
+      <h2 class="section-title">مانده کل اقساط باقی‌مانده<span class="rule"></span></h2>
+      <div class="stat-card" style="max-width:260px;"><div class="value" id="loan_totalRemain">۰</div><div class="unit">تومان</div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const KEYS = { expenses:'expenses', checksRecv:'checks_received', checksPaid:'checks_paid', counterparties:'counterparties', loans:'loans', bankAccounts:'bank_accounts' };
+let state = { expenses:[], checksRecv:[], checksPaid:[], counterparties:[], loans:[], bankAccounts:[] };
+
+const fa = n => Math.round(n||0).toLocaleString('fa-IR');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+// ---------- Jalali (Shamsi) date conversion — pure JS, no external library ----------
+function gregorianToJalali(gy, gm, gd){
+  const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+  let jy = (gy <= 1600) ? 0 : 979;
+  gy -= (gy <= 1600) ? 621 : 1600;
+  const gy2 = (gm > 2) ? (gy + 1) : gy;
+  let days = (365*gy) + (Math.floor((gy2+3)/4)) - (Math.floor((gy2+99)/100)) + (Math.floor((gy2+399)/400)) - 80 + gd + g_d_m[gm-1];
+  jy += 33*Math.floor(days/12053);
+  days %= 12053;
+  jy += 4*Math.floor(days/1461);
+  days %= 1461;
+  if(days > 365){ jy += Math.floor((days-1)/365); days = (days-1)%365; }
+  const jm = (days < 186) ? 1+Math.floor(days/31) : 7+Math.floor((days-186)/30);
+  const jd = 1 + ((days < 186) ? (days%31) : ((days-186)%30));
+  return [jy, jm, jd];
+}
+function toJalali(isoDateStr){
+  if(!isoDateStr) return '';
+  const [gy,gm,gd] = isoDateStr.split('-').map(Number);
+  if(!gy||!gm||!gd) return '';
+  const [jy,jm,jd] = gregorianToJalali(gy,gm,gd);
+  const p2 = n => String(n).padStart(2,'0');
+  return toFaDigits(`${jy}/${p2(jm)}/${p2(jd)}`);
+}
+function jalaliToGregorian(jy, jm, jd){
+  jy += 1595;
+  let days = -355668 + (365*jy) + (Math.floor(jy/33)*8) + Math.floor(((jy%33)+3)/4) + jd + ((jm<7)? (jm-1)*31 : ((jm-7)*30)+186);
+  let gy = 400*Math.floor(days/146097);
+  days %= 146097;
+  if(days > 36524){
+    gy += 100*Math.floor((--days)/36524);
+    days %= 36524;
+    if(days >= 365) days++;
+  }
+  gy += 4*Math.floor(days/1461);
+  days %= 1461;
+  if(days > 365){
+    gy += Math.floor((days-1)/365);
+    days = (days-1)%365;
+  }
+  let gd = days + 1;
+  const isLeapG = (gy%4===0 && gy%100!==0) || gy%400===0;
+  const sal_a = [0,31, isLeapG?29:28, 31,30,31,30,31,31,30,31,30,31];
+  let gm=0;
+  while(gm<13 && gd > sal_a[gm+1]){ gd -= sal_a[gm+1]; gm++; }
+  return [gy, gm+1, gd];
+}
+function jalaliToISO(jy, jm, jd){
+  const [gy,gm,gd] = jalaliToGregorian(jy,jm,jd);
+  const p2 = n => String(n).padStart(2,'0');
+  return `${gy}-${p2(gm)}-${p2(gd)}`;
+}
+function isJalaliLeap(jy){
+  // 33-year cycle approximation — accurate across the whole practical range of this app
+  return [1,5,9,13,17,22,26,30].includes(((jy%33)+33)%33);
+}
+function jalaliMonthLength(jy, jm){
+  if(jm<=6) return 31;
+  if(jm<=11) return 30;
+  return isJalaliLeap(jy) ? 30 : 29;
+}
+const JALALI_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+function todayJalali(){
+  const [gy,gm,gd] = todayISO().split('-').map(Number);
+  return gregorianToJalali(gy,gm,gd);
+}
+function todayISO(){
+  const d = new Date();
+  const p2 = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+}
+function daysBetween(isoA, isoB){
+  // isoB - isoA in whole days
+  const a = new Date(isoA+'T00:00:00');
+  const b = new Date(isoB+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+function jalaliMonthKey(isoDateStr){
+  // returns {key:"1405-05", label:"مرداد ۱۴۰۵", jy, jm} for grouping/sorting by real calendar month
+  const [gy,gm,gd] = isoDateStr.split('-').map(Number);
+  const [jy,jm2] = gregorianToJalali(gy,gm,gd);
+  const p2 = n => String(n).padStart(2,'0');
+  return { key:`${jy}-${p2(jm2)}`, label:`${JALALI_MONTHS[jm2-1]} ${toFaDigits(jy)}`, jy, jm:jm2 };
+}
+
+// ---------- Jalali 3-select date picker (day / month / year) ----------
+function populateJalaliYearSelect(selectEl, centerYear){
+  selectEl.innerHTML='';
+  for(let y=centerYear-5; y<=centerYear+1; y++){
+    const opt=document.createElement('option'); opt.value=y; opt.textContent=toFaDigits(y); selectEl.appendChild(opt);
+  }
+}
+function populateJalaliMonthSelect(selectEl){
+  selectEl.innerHTML = JALALI_MONTHS.map((name,i)=>`<option value="${i+1}">${name}</option>`).join('');
+}
+function populateJalaliDaySelect(selectEl, jy, jm, keepDay){
+  const len = jalaliMonthLength(jy, jm);
+  const prev = keepDay || parseInt(selectEl.value,10) || 1;
+  selectEl.innerHTML='';
+  for(let d=1; d<=len; d++){
+    const opt=document.createElement('option'); opt.value=d; opt.textContent=toFaDigits(d); selectEl.appendChild(opt);
+  }
+  selectEl.value = Math.min(prev, len);
+}
+function setupExpenseDatePicker(){
+  const dEl = document.getElementById('exp_jd');
+  const mEl = document.getElementById('exp_jm');
+  const yEl = document.getElementById('exp_jy');
+  if(!dEl||!mEl||!yEl) return;
+  const [ty,tm,td] = todayJalali();
+  populateJalaliMonthSelect(mEl);
+  populateJalaliYearSelect(yEl, ty);
+  yEl.value = ty;
+  mEl.value = tm;
+  populateJalaliDaySelect(dEl, ty, tm, td);
+  const onMonthYearChange = ()=>{
+    const jy = parseInt(yEl.value,10), jm = parseInt(mEl.value,10);
+    populateJalaliDaySelect(dEl, jy, jm);
+  };
+  mEl.addEventListener('change', onMonthYearChange);
+  yEl.addEventListener('change', onMonthYearChange);
+}
+function jalaliSelectsToISO(){
+  const jy = parseInt(document.getElementById('exp_jy').value,10);
+  const jm = parseInt(document.getElementById('exp_jm').value,10);
+  const jd = parseInt(document.getElementById('exp_jd').value,10);
+  if(!jy||!jm||!jd) return '';
+  return jalaliToISO(jy,jm,jd);
+}
+
+// ---------- thousands-separator live formatting for amount inputs ----------
+function attachThousandsFormatting(input){
+  input.addEventListener('input', ()=>{
+    const raw = input.value.replace(/[^\d]/g,'');
+    input.value = raw ? Number(raw).toLocaleString('en-US') : '';
+  });
+}
+function rawNumber(input){
+  return parseFloat((input.value||'').replace(/[^\d.]/g,'')) || 0;
+}
+
+// ---------- storage (localStorage — کاملاً روی گوشی ذخیره می‌شود، آفلاین کار می‌کند) ----------
+const STORAGE_PREFIX = 'daftar_mali_man__';
+async function loadKey(key, fallback){
+  try{
+    const raw = window.localStorage.getItem(STORAGE_PREFIX + key);
+    if(raw) return JSON.parse(raw);
+    return fallback;
+  }catch(e){ return fallback; }
+}
+async function saveKey(key, value){
+  try{
+    flashSaving();
+    window.localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+    flashSaved();
+  }catch(e){ flashError(); }
+}
+let saveTimer=null;
+function flashSaving(){
+  document.getElementById('saveText').textContent = 'در حال ذخیره...';
+  document.getElementById('saveBadge').style.opacity='0.7';
+}
+function flashSaved(){
+  document.getElementById('saveText').textContent = 'ذخیره‌شده';
+  document.getElementById('saveBadge').style.opacity='1';
+}
+function flashError(){
+  document.getElementById('saveText').textContent = 'خطا در ذخیره — دوباره تلاش می‌کنم';
+}
+
+async function loadAll(){
+  state.expenses = await loadKey(KEYS.expenses, []);
+  state.checksRecv = await loadKey(KEYS.checksRecv, []);
+  state.checksPaid = await loadKey(KEYS.checksPaid, []);
+  state.counterparties = await loadKey(KEYS.counterparties, []);
+  state.loans = await loadKey(KEYS.loans, []);
+  state.bankAccounts = await loadKey(KEYS.bankAccounts, []);
+  renderAll();
+}
+
+// ---------- tabs ----------
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+});
+
+// ---------- EXPENSES ----------
+document.getElementById('expenseForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const date = jalaliSelectsToISO();
+  const category = document.getElementById('exp_cat').value.trim();
+  const card = document.getElementById('exp_card').value.trim();
+  const amount = rawNumber(document.getElementById('exp_amount'));
+  if(!date || !category || !card || !amount) return;
+  state.expenses.push({id:uid(), date, category, card, amount});
+  document.getElementById('exp_cat').value='';
+  document.getElementById('exp_card').value='';
+  document.getElementById('exp_amount').value='';
+  await saveKey(KEYS.expenses, state.expenses);
+  renderExpenses();
+  renderSummary();
+});
+document.getElementById('clearExpenses').addEventListener('click', async ()=>{
+  if(!confirm('همه هزینه‌های ثبت‌شده پاک شوند؟')) return;
+  state.expenses = [];
+  await saveKey(KEYS.expenses, state.expenses);
+  renderExpenses(); renderSummary();
+});
+async function deleteExpense(id){
+  state.expenses = state.expenses.filter(x=>x.id!==id);
+  await saveKey(KEYS.expenses, state.expenses);
+  renderExpenses(); renderSummary();
+}
+
+function renderExpenses(){
+  const list = state.expenses;
+  const total = list.reduce((s,x)=>s+x.amount,0);
+  const distinctDays = new Set(list.map(x=>x.date)).size;
+  const avg = distinctDays ? total/distinctDays : 0;
+  document.getElementById('e_total').textContent = fa(total);
+  document.getElementById('e_avg').textContent = fa(avg);
+  document.getElementById('e_count').textContent = fa(list.length);
+
+  // datalists — cards used previously + bank account names
+  const cats = [...new Set(list.map(x=>x.category))];
+  const cardsUsed = list.map(x=>x.card);
+  const accountNames = state.bankAccounts.map(a=>a.name);
+  const cards = [...new Set([...accountNames, ...cardsUsed])];
+  document.getElementById('catList').innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">`).join('');
+  document.getElementById('cardList').innerHTML = cards.map(c=>`<option value="${escapeHtml(c)}">`).join('');
+
+  // totals grouped by real calendar date
+  const byDate = {};
+  list.forEach(x=> byDate[x.date]=(byDate[x.date]||0)+x.amount );
+  const daysWithData = Object.entries(byDate);
+  if(daysWithData.length){
+    const maxEntry = daysWithData.reduce((a,b)=> b[1]>a[1]?b:a);
+    const minEntry = daysWithData.reduce((a,b)=> b[1]<a[1]?b:a);
+    document.getElementById('e_maxDay').textContent = `${toJalali(maxEntry[0])} — ${fa(maxEntry[1])} تومان`;
+    document.getElementById('e_minDay').textContent = `${toJalali(minEntry[0])} — ${fa(minEntry[1])} تومان`;
+  } else {
+    document.getElementById('e_maxDay').textContent = '—';
+    document.getElementById('e_minDay').textContent = '—';
+  }
+  drawDayChart(byDate);
+  drawMonthChart(list);
+  renderMonthTrend(list);
+
+  // table — most recent first
+  const wrap = document.getElementById('expenseTableWrap');
+  if(!list.length){
+    wrap.innerHTML = '<div class="empty-note">هنوز هزینه‌ای ثبت نکرده‌اید. اولین ردیف را از فرم بالا اضافه کنید.</div>';
+    return;
+  }
+  const rows = [...list].sort((a,b)=> b.date.localeCompare(a.date)).map(x=>`
+    <tr>
+      <td>${toJalali(x.date)}</td>
+      <td>${escapeHtml(x.category)}</td>
+      <td>${escapeHtml(x.card)}</td>
+      <td class="amt debt">${fa(x.amount)}</td>
+      <td><button class="row-del" data-id="${x.id}" title="حذف">✕</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `<table class="ledger-table"><thead><tr>
+    <th>تاریخ</th><th>دسته</th><th>کارت</th><th>مبلغ</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  wrap.querySelectorAll('.row-del').forEach(b=> b.addEventListener('click', ()=>deleteExpense(b.dataset.id)));
+}
+
+function drawMonthChart(list){
+  const svg = document.getElementById('monthChart');
+  if(!svg) return;
+  const N = 6;
+  const [ty, tm] = todayJalali();
+  const months = [];
+  for(let i=N-1; i>=0; i--){
+    let jy=ty, jm=tm-i;
+    while(jm<1){ jm+=12; jy--; }
+    months.push({jy, jm, key:`${jy}-${String(jm).padStart(2,'0')}`});
+  }
+  const sums = {};
+  list.forEach(x=>{ const {key} = jalaliMonthKey(x.date); sums[key]=(sums[key]||0)+x.amount; });
+  const values = months.map(m=> sums[m.key]||0);
+  const max = Math.max(1, ...values);
+  const w=700, h=200, padB=26, padT=10, barGap=14;
+  const barW = (w - barGap*(N+1))/N;
+  let bars='';
+  months.forEach((m, idx)=>{
+    const v = values[idx];
+    const bh = (v/max)*(h-padB-padT);
+    const x = barGap + idx*(barW+barGap);
+    const y = h - padB - bh;
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="3" fill="var(--brass)" opacity="${v?1:0.15}"></rect>
+      <text x="${x+barW/2}" y="${h-8}" font-size="11" fill="var(--ink-soft)" text-anchor="middle">${toFaDigits(JALALI_MONTHS[m.jm-1].slice(0,4))}</text>`;
+  });
+  svg.innerHTML = bars;
+}
+
+function renderMonthTrend(list){
+  const el = document.getElementById('monthTrend');
+  if(!el) return;
+  const sums = {};
+  list.forEach(x=>{ const info = jalaliMonthKey(x.date); sums[info.key] = (sums[info.key]||0) + x.amount; sums[info.key+'_label'] = info.label; });
+  const keys = Object.keys(sums).filter(k=>!k.endsWith('_label')).sort();
+  if(keys.length < 2){
+    el.innerHTML = '<div class="empty-note">برای نمایش روند صعودی/نزولی، حداقل به دو ماه با هزینهٔ ثبت‌شده نیاز است.</div>';
+    return;
+  }
+  const rows = keys.slice(1).map((key, idx)=>{
+    const prevKey = keys[idx]; // keys[idx] is the month before `key` since slice(1) shifted by one
+    const cur = sums[key], prev = sums[prevKey];
+    const diffPct = prev ? Math.round(((cur-prev)/prev)*100) : (cur>0?100:0);
+    let cls='flat', arrow='＝', text='بدون تغییر';
+    if(cur>prev){ cls='up'; arrow='▲'; text=`${toFaDigits(Math.abs(diffPct))}٪ افزایش`; }
+    else if(cur<prev){ cls='down'; arrow='▼'; text=`${toFaDigits(Math.abs(diffPct))}٪ کاهش`; }
+    return `<div class="trend-row">
+      <span class="trend-month">${sums[key+'_label']}</span>
+      <span class="trend-amt">${fa(cur)} تومان</span>
+      <span class="trend-badge ${cls}">${arrow} ${text}</span>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="trend-wrap">${rows}</div>`;
+}
+function drawDayChart(byDate){
+  const svg = document.getElementById('dayChart');
+  const N = 14;
+  const today = new Date();
+  const days = [];
+  for(let i=N-1; i>=0; i--){
+    const d = new Date(today);
+    d.setDate(d.getDate()-i);
+    const p2 = n => String(n).padStart(2,'0');
+    const iso = `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+    days.push(iso);
+  }
+  const values = days.map(iso => byDate[iso]||0);
+  const max = Math.max(1, ...values);
+  const w=700, h=200, padB=26, padT=10, barGap=8;
+  const barW = (w - barGap*(N+1))/N;
+  let bars='';
+  days.forEach((iso, idx)=>{
+    const v = values[idx];
+    const bh = (v/max)*(h-padB-padT);
+    const x = barGap + idx*(barW+barGap);
+    const y = h - padB - bh;
+    const [,jm,jd] = (()=>{ const [gy,gm,gd]=iso.split('-').map(Number); return gregorianToJalali(gy,gm,gd); })();
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="3" fill="var(--cover)" opacity="${v?1:0.15}"></rect>
+      <text x="${x+barW/2}" y="${h-8}" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">${toFaDigits(jd)}</text>`;
+  });
+  svg.innerHTML = bars;
+}
+
+// ---------- CHECKS ----------
+document.getElementById('checkRecvForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name = document.getElementById('crecv_name').value.trim();
+  const amount = rawNumber(document.getElementById('crecv_amount'));
+  const date = document.getElementById('crecv_date').value;
+  if(!name||!amount) return;
+  state.checksRecv.push({id:uid(), name, amount, date});
+  e.target.reset();
+  await saveKey(KEYS.checksRecv, state.checksRecv);
+  renderChecks(); renderSummary();
+});
+document.getElementById('checkPaidForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name = document.getElementById('cpaid_name').value.trim();
+  const amount = rawNumber(document.getElementById('cpaid_amount'));
+  const date = document.getElementById('cpaid_date').value;
+  if(!name||!amount) return;
+  state.checksPaid.push({id:uid(), name, amount, date});
+  e.target.reset();
+  await saveKey(KEYS.checksPaid, state.checksPaid);
+  renderChecks(); renderSummary();
+});
+async function deleteCheck(kind,id){
+  if(kind==='recv'){ state.checksRecv = state.checksRecv.filter(x=>x.id!==id); await saveKey(KEYS.checksRecv, state.checksRecv); }
+  else { state.checksPaid = state.checksPaid.filter(x=>x.id!==id); await saveKey(KEYS.checksPaid, state.checksPaid); }
+  renderChecks(); renderSummary();
+}
+function renderChecks(){
+  const recvTotal = state.checksRecv.reduce((s,x)=>s+x.amount,0);
+  const paidTotal = state.checksPaid.reduce((s,x)=>s+x.amount,0);
+  document.getElementById('chk_net').textContent = fa(recvTotal-paidTotal);
+
+  renderDueAlerts('checksAlerts');
+  document.getElementById('checkRecvTableWrap').innerHTML = checkTable(state.checksRecv,'recv','credit');
+  document.getElementById('checkPaidTableWrap').innerHTML = checkTable(state.checksPaid,'paid','debt');
+  document.querySelectorAll('.row-del[data-kind]').forEach(b=>{
+    b.addEventListener('click', ()=>deleteCheck(b.dataset.kind, b.dataset.id));
+  });
+}
+function checkTable(list, kind, amtClass){
+  if(!list.length) return '<div class="empty-note">هنوز چکی ثبت نشده است</div>';
+  const sorted = [...list].sort((a,b)=> (a.date||'9999').localeCompare(b.date||'9999'));
+  const rows = sorted.map(x=>`
+    <tr><td>${escapeHtml(x.name)}</td><td>${x.date?toJalali(x.date):'—'}</td>
+    <td class="amt ${amtClass}">${fa(x.amount)}</td>
+    <td>${dueBadge(x.date)}</td>
+    <td><button class="row-del" data-kind="${kind}" data-id="${x.id}">✕</button></td></tr>`).join('');
+  return `<table class="ledger-table"><thead><tr><th>طرف چک</th><th>سررسید</th><th>مبلغ</th><th>وضعیت</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---------- COUNTERPARTY ----------
+document.getElementById('cpForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name = document.getElementById('cp_name').value.trim();
+  const claim = rawNumber(document.getElementById('cp_claim'));
+  const debt = rawNumber(document.getElementById('cp_debt'));
+  if(!name || (!claim && !debt)) return;
+  state.counterparties.push({id:uid(), name, claim, debt});
+  e.target.reset();
+  await saveKey(KEYS.counterparties, state.counterparties);
+  renderCounterparty(); renderSummary();
+});
+async function deleteCp(id){
+  state.counterparties = state.counterparties.filter(x=>x.id!==id);
+  await saveKey(KEYS.counterparties, state.counterparties);
+  renderCounterparty(); renderSummary();
+}
+function renderCounterparty(){
+  const list = state.counterparties;
+  const claimTotal = list.reduce((s,x)=>s+x.claim,0);
+  const debtTotal = list.reduce((s,x)=>s+x.debt,0);
+  document.getElementById('cp_net').textContent = fa(claimTotal-debtTotal);
+  const wrap = document.getElementById('cpTableWrap');
+  if(!list.length){ wrap.innerHTML='<div class="empty-note">هنوز طرف حسابی ثبت نشده است</div>'; return; }
+  const rows = list.map(x=>`
+    <tr><td>${escapeHtml(x.name)}</td>
+    <td class="amt credit">${fa(x.claim)}</td>
+    <td class="amt debt">${fa(x.debt)}</td>
+    <td class="amt">${fa(x.claim-x.debt)}</td>
+    <td><button class="row-del" data-id="${x.id}">✕</button></td></tr>`).join('');
+  wrap.innerHTML = `<table class="ledger-table"><thead><tr><th>نام</th><th>طلب من از او</th><th>بدهی من به او</th><th>خالص</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  wrap.querySelectorAll('.row-del').forEach(b=>b.addEventListener('click',()=>deleteCp(b.dataset.id)));
+}
+
+// ---------- LOANS ----------
+document.getElementById('loanForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name = document.getElementById('loan_name').value.trim();
+  const principal = rawNumber(document.getElementById('loan_principal'));
+  const remaining = rawNumber(document.getElementById('loan_remaining'));
+  if(!name||!principal||remaining==null||isNaN(remaining)) return;
+  state.loans.push({id:uid(), name, principal, remaining});
+  e.target.reset();
+  await saveKey(KEYS.loans, state.loans);
+  renderLoans(); renderSummary();
+});
+async function deleteLoan(id){
+  state.loans = state.loans.filter(x=>x.id!==id);
+  await saveKey(KEYS.loans, state.loans);
+  renderLoans(); renderSummary();
+}
+function renderLoans(){
+  const list = state.loans;
+  const remainTotal = list.reduce((s,x)=>s+x.remaining,0);
+  const principalTotal = list.reduce((s,x)=>s+x.principal,0);
+  document.getElementById('loan_totalRemain').textContent = fa(remainTotal);
+  const wrap = document.getElementById('loanTableWrap');
+  if(!list.length){ wrap.innerHTML='<div class="empty-note">هنوز وامی ثبت نشده است</div>'; return; }
+  const rows = list.map(x=>`
+    <tr><td>${escapeHtml(x.name)}</td>
+    <td class="amt">${fa(x.principal)}</td>
+    <td class="amt debt">${fa(x.remaining)}</td>
+    <td><button class="row-del" data-id="${x.id}">✕</button></td></tr>`).join('');
+  wrap.innerHTML = `<table class="ledger-table"><thead><tr><th>نام وام</th><th>اصل وام</th><th>مانده باقی‌مانده</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  wrap.querySelectorAll('.row-del').forEach(b=>b.addEventListener('click',()=>deleteLoan(b.dataset.id)));
+}
+
+// ---------- BANK ACCOUNTS ----------
+document.getElementById('accountForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const name = document.getElementById('acc_name').value.trim();
+  const initialBalance = rawNumber(document.getElementById('acc_balance'));
+  if(!name) return;
+  state.bankAccounts.push({id:uid(), name, initialBalance});
+  e.target.reset();
+  await saveKey(KEYS.bankAccounts, state.bankAccounts);
+  renderBankAccounts(); renderExpenses(); renderSummary();
+});
+async function deleteAccount(id){
+  state.bankAccounts = state.bankAccounts.filter(x=>x.id!==id);
+  await saveKey(KEYS.bankAccounts, state.bankAccounts);
+  renderBankAccounts(); renderExpenses(); renderSummary();
+}
+function accountCurrentBalance(acc){
+  const spent = state.expenses.filter(x=>x.card===acc.name).reduce((s,x)=>s+x.amount,0);
+  return acc.initialBalance - spent;
+}
+function renderBankAccounts(){
+  const list = state.bankAccounts;
+  const totalCurrent = list.reduce((s,a)=>s+accountCurrentBalance(a),0);
+  document.getElementById('acc_totalBalance').textContent = fa(totalCurrent);
+  const wrap = document.getElementById('accountTableWrap');
+  if(!list.length){ wrap.innerHTML = '<div class="empty-note">هنوز حساب بانکی ثبت نشده است</div>'; return; }
+  const rows = list.map(x=>{
+    const current = accountCurrentBalance(x);
+    return `<tr><td>${escapeHtml(x.name)}</td>
+    <td class="amt">${fa(x.initialBalance)}</td>
+    <td class="amt ${current<0?'debt':'credit'}">${fa(current)}</td>
+    <td><button class="row-del" data-id="${x.id}">✕</button></td></tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="ledger-table"><thead><tr><th>نام حساب</th><th>موجودی اولیه</th><th>موجودی فعلی</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  wrap.querySelectorAll('.row-del').forEach(b=>b.addEventListener('click',()=>deleteAccount(b.dataset.id)));
+}
+
+// ---------- SUMMARY ----------
+function getDueStatus(dateStr, todayStr){
+  if(!dateStr) return {status:'none', daysLeft:null};
+  const diff = daysBetween(todayStr, dateStr);
+  if(diff<0) return {status:'over', daysLeft:diff};
+  if(diff<=7) return {status:'soon', daysLeft:diff};
+  return {status:'ok', daysLeft:diff};
+}
+function dueBadge(dateStr){
+  if(!dateStr) return '';
+  const {status, daysLeft} = getDueStatus(dateStr, todayISO());
+  if(status==='over') return `<span class="tag due-over">${toFaDigits(Math.abs(daysLeft))} روز از سررسید گذشته</span>`;
+  if(status==='soon') return daysLeft===0 ? `<span class="tag due-soon">سررسید امروز</span>` : `<span class="tag due-soon">${toFaDigits(daysLeft)} روز تا سررسید</span>`;
+  return `<span class="tag due-ok">سررسید نشده</span>`;
+}
+function renderDueAlerts(containerId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const today = todayISO();
+  const items = [];
+  state.checksRecv.forEach(x=>{ if(!x.date) return; const days = daysBetween(today, x.date); if(days<=7) items.push({...x, kind:'recv', days}); });
+  state.checksPaid.forEach(x=>{ if(!x.date) return; const days = daysBetween(today, x.date); if(days<=7) items.push({...x, kind:'paid', days}); });
+  if(!items.length){ el.innerHTML=''; return; }
+  items.sort((a,b)=>a.days-b.days);
+  const hasOverdue = items.some(x=>x.days<0);
+  const rows = items.map(x=>{
+    const label = x.days<0 ? `${toFaDigits(Math.abs(x.days))} روز از سررسید گذشته` : (x.days===0 ? 'سررسید امروز' : `${toFaDigits(x.days)} روز تا سررسید`);
+    const kindLabel = x.kind==='recv' ? 'چک دریافتی از' : 'چک پرداختی به';
+    return `<li>${kindLabel} «${escapeHtml(x.name)}» به مبلغ ${fa(x.amount)} تومان — ${toJalali(x.date)} (${label})</li>`;
+  }).join('');
+  el.innerHTML = `<div class="alert-banner ${hasOverdue?'danger':''}">
+    <div class="alert-title">⏰ هشدار سررسید چک</div>
+    <ul>${rows}</ul>
+  </div>`;
+}
+
+function renderSummary(){
+  const accInitialTotal = state.bankAccounts.reduce((s,a)=>s+a.initialBalance,0);
+  const accCurrentTotal = state.bankAccounts.reduce((s,a)=>s+accountCurrentBalance(a),0);
+  document.getElementById('s_accInitial').textContent = fa(accInitialTotal);
+  document.getElementById('s_accCurrent').textContent = fa(accCurrentTotal);
+
+  const expTotal = state.expenses.reduce((s,x)=>s+x.amount,0);
+  const distinctDays = new Set(state.expenses.map(x=>x.date)).size;
+  const dailyAvg = distinctDays ? expTotal/distinctDays : 0;
+  document.getElementById('s_expTotal').textContent = fa(expTotal);
+  document.getElementById('s_expAvg').textContent = fa(dailyAvg);
+  document.getElementById('s_expMonthly').textContent = fa(dailyAvg*30);
+  renderDueAlerts('summaryAlerts');
+
+  const recvTotal = state.checksRecv.reduce((s,x)=>s+x.amount,0);
+  const paidTotal = state.checksPaid.reduce((s,x)=>s+x.amount,0);
+  document.getElementById('s_chkRecv').textContent = fa(recvTotal);
+  document.getElementById('s_chkPaid').textContent = fa(paidTotal);
+  document.getElementById('s_chkNet').textContent = fa(recvTotal-paidTotal);
+
+  const claimTotal = state.counterparties.reduce((s,x)=>s+x.claim,0);
+  const debtTotal = state.counterparties.reduce((s,x)=>s+x.debt,0);
+  document.getElementById('s_cpClaim').textContent = fa(claimTotal);
+  document.getElementById('s_cpDebt').textContent = fa(debtTotal);
+  document.getElementById('s_cpNet').textContent = fa(claimTotal-debtTotal);
+
+  const remainTotal = state.loans.reduce((s,x)=>s+x.remaining,0);
+  const principalTotal = state.loans.reduce((s,x)=>s+x.principal,0);
+  document.getElementById('s_loanRemain').textContent = fa(remainTotal);
+  document.getElementById('s_loanPrincipal').textContent = fa(principalTotal);
+}
+
+function renderAll(){ renderBankAccounts(); renderSummary(); renderExpenses(); renderChecks(); renderCounterparty(); renderLoans(); }
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toFaDigits(s){ return String(s).replace(/[0-9]/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]).replace(/-/g,'‑'); }
+
+['exp_amount','crecv_amount','cpaid_amount','cp_claim','cp_debt','loan_principal','loan_remaining','acc_balance'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) attachThousandsFormatting(el);
+});
+setupExpenseDatePicker();
+
+loadAll();
+
+// ---------- Quick-Add via URL params (used by the "افزودن هزینه سریع" Shortcut) ----------
+function normalizeDigits(str){
+  return String(str)
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+function autoAddFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const amountParam = params.get('amount');
+  const catParam = params.get('cat') || params.get('category');
+  const cardParam = params.get('card') || params.get('bank');
+  if(amountParam===null && catParam===null && cardParam===null) return;
+
+  // برو به تب «هزینه‌ها»
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="expenses"]').classList.add('active');
+  document.getElementById('tab-expenses').classList.add('active');
+
+  const amountEl = document.getElementById('exp_amount');
+  const catEl = document.getElementById('exp_cat');
+  const cardEl = document.getElementById('exp_card');
+
+  if(amountParam!==null){
+    const digits = normalizeDigits(amountParam).replace(/[^\d.]/g,'');
+    amountEl.value = digits ? Number(digits).toLocaleString('en-US') : '';
+  }
+  if(catParam!==null) catEl.value = catParam;
+  if(cardParam!==null) cardEl.value = cardParam;
+
+  // پاک کردن پارامترها از آدرس تا با رفرش دوباره ثبت نشود
+  history.replaceState({}, '', window.location.pathname);
+
+  // اگر هر سه مقدار موجود بود، خودکار ثبت کن
+  setTimeout(()=>{
+    if(amountEl.value && catEl.value && cardEl.value){
+      document.getElementById('expenseForm').requestSubmit();
+    }
+  }, 60);
+}
+autoAddFromURL();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
